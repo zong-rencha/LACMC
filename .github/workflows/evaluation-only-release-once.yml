@@ -1,0 +1,32 @@
+name: Build and replace evaluation-only image once
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Build a private draft candidate or publish the validated candidate
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - publish
+permissions: {}
+concurrency:
+  group: evaluation-only-v1.3-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'zong-rencha/LACMC' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run only the manually selected release phase
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PHASE: ${{ inputs.phase }}
+        run: python3 release-build/eval_only_release.py "$RELEASE_PHASE"
